@@ -1,0 +1,482 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: gitlab-persisent
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+      openshift.io/image.dockerRepositoryCheck: 2016-03-03T17:08:56Z
+    creationTimestamp: null
+    labels:
+      app: gitlab
+    name: gitlab
+  spec:
+    dockerImageRepository: sameersbn/gitlab
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+      openshift.io/image.dockerRepositoryCheck: 2016-04-20T15:54:45Z
+    creationTimestamp: null
+    labels:
+      app: postfix
+    name: postfix
+  spec:
+    dockerImageRepository: alezzandro/postfix
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+      openshift.io/image.dockerRepositoryCheck: 2016-03-04T15:40:41Z
+    creationTimestamp: null
+    labels:
+      app: redis
+    name: redis
+  spec:
+    dockerImageRepository: sameersbn/redis
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: gitlab
+    name: gitlab
+  spec:
+    replicas: 2
+    selector:
+      app: gitlab
+      deploymentconfig: gitlab
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: gitlab
+          deploymentconfig: gitlab
+      spec:
+        containers:
+        - env:
+          - name: DEBUG
+            value: "true"
+          - name: DB_TYPE
+            value: postgres
+          - name: DB_HOST
+            value: postgresql
+          - name: DB_NAME
+            value: gitlab
+          - name: DB_USER
+            value: user0W1
+          - name: DB_PASS
+            value: 6O4Ot8GM0j0YEJoO
+          - name: DB_PORT
+            value: "5432"
+          - name: REDIS_HOST
+            value: redis
+          - name: REDIS_PORT
+            value: "6379"
+          - name: GITLAB_SECRETS_DB_KEY_BASE
+            value: a66071e7894a342bd483ce0017bf64f2028349a2e2e9dc7ab45f47f8762db378
+          - name: GITLAB_HOST
+            value: gitlab.apps.gen.local
+          - name: GITLAB_PORT
+            value: "80"
+          - name: GITLAB_SSH_PORT
+            value: "10022"
+          - name: SMTP_ENABLED
+            value: "true"
+          - name: GITLAB_EMAIL
+            value: no-reply@gitsmtp.opensrc.mx
+          - name: SMTP_HOST
+            value: postfix
+          - name: SMTP_PORT
+            value: "25"
+          - name: SMTP_DOMAIN
+            value: gitsmtp.opensrc.mx
+          image: sameersbn/gitlab@sha256:a66071e7894a342bd483ce0017bf64f2028349a2e2e9dc7ab45f47f8762db378
+          imagePullPolicy: Always
+          name: gitlab
+          ports:
+          - containerPort: 10022
+            protocol: TCP
+          - containerPort: 10080
+            protocol: TCP
+          - containerPort: 443
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/log/gitlab
+            name: gitlab-volume-1
+          - mountPath: /home/git/data
+            name: gitlab-volume-2
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: gitlab-sa
+        serviceAccountName: gitlab-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: gitlab-volume-1
+          persistentVolumeClaim:
+            claimName: pvc-oz4mb
+        - name: gitlab-volume-2
+          persistentVolumeClaim:
+            claimName: pvc-1t4t7
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        containerNames:
+        - gitlab
+        from:
+          kind: ImageStreamTag
+          name: gitlab:latest
+      type: ImageChange
+  status: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: postfix
+    name: postfix
+  spec:
+    replicas: 1
+    selector:
+      app: postfix
+      deploymentconfig: postfix
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: postfix
+          deploymentconfig: postfix
+      spec:
+        containers:
+        - env:
+          - name: myhostname
+            value: gitsmtp.opensrc.mx
+          image: alezzandro/postfix@sha256:ca7fc9e58e9da45ff8ecf266f5f875e264bae903f504024f2bb3ae7b46d2e71c
+          imagePullPolicy: IfNotPresent
+          name: postfix
+          ports:
+          - containerPort: 25
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          usefor: postfix
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - postfix
+        from:
+          kind: ImageStreamTag
+          name: postfix:latest
+      type: ImageChange
+  status: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      template: postgresql-persistent-template
+    name: postgresql
+  spec:
+    replicas: 1
+    selector:
+      name: postgresql
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: postgresql
+      spec:
+        containers:
+        - env:
+          - name: POSTGRESQL_USER
+            value: user0W1
+          - name: POSTGRESQL_PASSWORD
+            value: 6O4Ot8GM0j0YEJoO
+          - name: POSTGRESQL_DATABASE
+            value: gitlab
+          image: registry.access.redhat.com/rhscl/postgresql-94-rhel7:latest
+          imagePullPolicy: IfNotPresent
+          name: postgresql
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: postgresql-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: postgresql-data
+          persistentVolumeClaim:
+            claimName: postgresql
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - postgresql
+        from:
+          kind: ImageStreamTag
+          name: postgresql:latest
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange
+  status: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: redis
+    name: redis
+  spec:
+    replicas: 1
+    selector:
+      app: redis
+      deploymentconfig: redis
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: redis
+          deploymentconfig: redis
+      spec:
+        containers:
+        - image: sameersbn/redis@sha256:628477886ef1669e5b891dd988f42b2be199fe6661ed7a1986d86a949530e2bd
+          imagePullPolicy: Always
+          name: redis
+          ports:
+          - containerPort: 6379
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/lib/redis
+            name: redis-volume-1
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: redis-volume-1
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - redis
+        from:
+          kind: ImageStreamTag
+          name: redis:latest
+      type: ImageChange
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: gitlab
+    name: gitlab
+  spec:
+    ports:
+    - name: 80-tcp
+      port: 10080
+      protocol: TCP
+      targetPort: 80
+    - name: 443-tcp
+      port: 443
+      protocol: TCP
+      targetPort: 443
+    selector:
+      app: gitlab
+      deploymentconfig: gitlab
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: postfix
+  spec:
+    ports:
+    - port: 25
+      protocol: TCP
+      targetPort: 25
+    selector:
+      app: postfix
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      template: postgresql-persistent-template
+    name: postgresql
+  spec:
+    ports:
+    - name: postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      name: postgresql
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: redis
+    name: redis
+  spec:
+    ports:
+    - name: 6379-tcp
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      app: redis
+      deploymentconfig: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: gitlab
+    name: gitlab
+  spec:
+    host: gitlab.apps.gen.local
+    port:
+      targetPort: 80
+    to:
+      kind: Service
+      name: gitlab
+  status: {}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    creationTimestamp: null
+    labels:
+      template: postgresql-persistent-template
+    name: postgresql
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+    volumeName: lv20
+  status: {}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    creationTimestamp: null
+    name: pvc-1t4t7
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1G
+    volumeName: lv11
+  status: {}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    creationTimestamp: null
+    name: pvc-oz4mb
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1G
+    volumeName: lv2
+  status: {}
