@@ -2,7 +2,58 @@ apiVersion: v1
 kind: Template
 metadata:
   creationTimestamp: null
+  annotations:
+    description: "Template for deployment od scalable Gitlab with peristence and integrated postfix"
   name: gitlab-persisent
+  - parameters:
+    - description: "Hostname for Gitlab application Service"
+      name: "GITLAB_HOSTNAME"
+      value: "gitlab.cloudapps.example.com"
+      required: "true"
+    - description: "Database Name"
+      name: "DATABASE_NAME"
+      value: "gitlab"
+      required: "true"
+    - description: "Database User"
+      name: "DATABASE_USER"
+      from: "user[a-zA-Z0-9]{3}"
+      required: "true"
+    - description: "Database Password"
+      name: "DATABASE_PWD"
+      from: "[a-zA-Z0-9]{8}"
+      required: "true"
+    - description: "Gitlab Secret Database Key"
+      name: "SECRET_DB_KEY"
+      from: "[a-zA-Z0-9]{64}"
+      required: "true"
+    - description: "Enable SMTP"
+      name: "SMTP_ENABLE"
+      value: "true"
+      required: "true"
+    - description: "Gitlab Email"
+      name: "GITLAB_EMAIL"
+      from: "no-reply@gitlab.example.com"
+      required: "true"
+    - description: "Gitlab Email Domain"
+      name: "GITLAB_EMAIL_DOMAIN"
+      from: "example.com"
+      required: "true"
+    - description: "Gitlab log volume capacity"
+      name: "LOG_VOLUME_CAPACITY"
+      from: "1 Gi"
+      required: "true"
+    - description: "Gitlab data volume capacity"
+      name: "DATA_VOLUME_CAPACITY"
+      from: "1 Gi"
+      required: "true"
+    - description: "Database data volume capacity"
+      name: "DATABASE_VOLUME_CAPACITY"
+      from: "1 Gi"
+      required: "true"
+    - description: "Database data volume capacity"
+      name: "REDIS_VOLUME_CAPACITY"
+      from: "1 Gi"
+      required: "true"
 objects:
 - apiVersion: v1
   kind: ImageStream
@@ -81,17 +132,17 @@ objects:
         containers:
         - env:
           - name: DEBUG
-            value: "true"
+            value: "false"
           - name: DB_TYPE
             value: postgres
           - name: DB_HOST
             value: postgresql
           - name: DB_NAME
-            value: gitlab
+            value: ${DATABASE_NAME}
           - name: DB_USER
-            value: user0W1
+            value: ${DATABASE_USER}
           - name: DB_PASS
-            value: 6O4Ot8GM0j0YEJoO
+            value: ${DATABASE_PWD}
           - name: DB_PORT
             value: "5432"
           - name: REDIS_HOST
@@ -99,23 +150,23 @@ objects:
           - name: REDIS_PORT
             value: "6379"
           - name: GITLAB_SECRETS_DB_KEY_BASE
-            value: a66071e7894a342bd483ce0017bf64f2028349a2e2e9dc7ab45f47f8762db378
+            value: ${SECRET_DB_KEY}
           - name: GITLAB_HOST
-            value: gitlab.apps.gen.local
+            value: ${GITLAB_HOSTNAME}
           - name: GITLAB_PORT
             value: "80"
           - name: GITLAB_SSH_PORT
             value: "10022"
           - name: SMTP_ENABLED
-            value: "true"
+            value: ${SMTP_ENABLE}
           - name: GITLAB_EMAIL
-            value: no-reply@gitsmtp.opensrc.mx
+            value: ${GITLAB_EMAIL}
           - name: SMTP_HOST
             value: postfix
           - name: SMTP_PORT
             value: "25"
           - name: SMTP_DOMAIN
-            value: gitsmtp.opensrc.mx
+            value: ${GITLAB_EMAIL_DOMAIN}
           image: sameersbn/gitlab@sha256:a66071e7894a342bd483ce0017bf64f2028349a2e2e9dc7ab45f47f8762db378
           imagePullPolicy: Always
           name: gitlab
@@ -142,10 +193,10 @@ objects:
         volumes:
         - name: gitlab-volume-1
           persistentVolumeClaim:
-            claimName: pvc-oz4mb
+            claimName: pvc-log
         - name: gitlab-volume-2
           persistentVolumeClaim:
-            claimName: pvc-1t4t7
+            claimName: pvc-data
     triggers:
     - type: ConfigChange
     - imageChangeParams:
@@ -191,7 +242,7 @@ objects:
         containers:
         - env:
           - name: myhostname
-            value: gitsmtp.opensrc.mx
+            value: ${GITLAB_EMAIL_DOMAIN}
           image: alezzandro/postfix@sha256:ca7fc9e58e9da45ff8ecf266f5f875e264bae903f504024f2bb3ae7b46d2e71c
           imagePullPolicy: IfNotPresent
           name: postfix
@@ -240,11 +291,11 @@ objects:
         containers:
         - env:
           - name: POSTGRESQL_USER
-            value: user0W1
+            value: ${DATABASE_USER}
           - name: POSTGRESQL_PASSWORD
-            value: 6O4Ot8GM0j0YEJoO
+            value: ${DATABASE_PWD}
           - name: POSTGRESQL_DATABASE
-            value: gitlab
+            value: ${DATABASE_NAME}
           image: registry.access.redhat.com/rhscl/postgresql-94-rhel7:latest
           imagePullPolicy: IfNotPresent
           name: postgresql
@@ -432,7 +483,7 @@ objects:
       app: gitlab
     name: gitlab
   spec:
-    host: gitlab.apps.gen.local
+    host: ${GITLAB_HOSTNAME}
     port:
       targetPort: 80
     to:
@@ -451,32 +502,29 @@ objects:
     - ReadWriteOnce
     resources:
       requests:
-        storage: 1Gi
-    volumeName: lv20
+        storage: ${DATABASE_VOLUME_CAPACITY}
   status: {}
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     creationTimestamp: null
-    name: pvc-1t4t7
+    name: pvc-log
   spec:
     accessModes:
     - ReadWriteOnce
     resources:
       requests:
-        storage: 1G
-    volumeName: lv11
+        storage: ${LOG_VOLUME_CAPACITY}
   status: {}
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     creationTimestamp: null
-    name: pvc-oz4mb
+    name: pvc-data
   spec:
     accessModes:
     - ReadWriteOnce
     resources:
       requests:
-        storage: 1G
-    volumeName: lv2
+        storage: ${DATA_VOLUME_CAPACITY}
   status: {}
