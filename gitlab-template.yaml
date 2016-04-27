@@ -4,7 +4,9 @@ metadata:
   creationTimestamp: null
   annotations:
     description: "Template for deployment od scalable Gitlab with peristence and integrated postfix"
-  name: gitlab-persisent
+    iconClass: icon-git
+    tags: instant-app,gitlab
+  name: gitlab-persistent
 objects:
 - apiVersion: v1
   kind: ImageStream
