@@ -120,7 +120,7 @@ objects:
             value: "25"
           - name: SMTP_DOMAIN
             value: ${GITLAB_EMAIL_DOMAIN}
-          image: sameersbn/gitlab@sha256:a66071e7894a342bd483ce0017bf64f2028349a2e2e9dc7ab45f47f8762db378
+          image: sameersbn/gitlab
           imagePullPolicy: Always
           name: gitlab
           ports:
@@ -196,7 +196,7 @@ objects:
         - env:
           - name: myhostname
             value: ${GITLAB_EMAIL_DOMAIN}
-          image: alezzandro/postfix@sha256:ca7fc9e58e9da45ff8ecf266f5f875e264bae903f504024f2bb3ae7b46d2e71c
+          image: alezzandro/postfix
           imagePullPolicy: IfNotPresent
           name: postfix
           ports:
@@ -316,7 +316,7 @@ objects:
           deploymentconfig: redis
       spec:
         containers:
-        - image: sameersbn/redis@sha256:628477886ef1669e5b891dd988f42b2be199fe6661ed7a1986d86a949530e2bd
+        - image: sameersbn/redis
           imagePullPolicy: Always
           name: redis
           ports:
@@ -492,15 +492,18 @@ parameters:
     required: true
   - description: "Database User"
     name: "DATABASE_USER"
-    from: "user[a-zA-Z0-9]{3}"
+    from: 'user[a-zA-Z0-9]{3}'
+    generate: "expression"
     required: true
   - description: "Database Password"
     name: "DATABASE_PWD"
-    from: "[a-zA-Z0-9]{8}"
+    from: '[a-zA-Z0-9]{8}'
+    generate: "expression"
     required: true
   - description: "Gitlab Secret Database Key"
     name: "SECRET_DB_KEY"
-    from: "[a-zA-Z0-9]{64}"
+    from: '[a-zA-Z0-9]{64}'
+    generate: "expression"
     required: true
   - description: "Enable SMTP"
     name: "SMTP_ENABLE"
