@@ -12,8 +12,6 @@ objects:
   kind: ImageStream
   metadata:
     annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-      openshift.io/image.dockerRepositoryCheck: 2016-03-03T17:08:56Z
     creationTimestamp: null
     labels:
       app: gitlab
@@ -26,8 +24,6 @@ objects:
   kind: ImageStream
   metadata:
     annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-      openshift.io/image.dockerRepositoryCheck: 2016-04-20T15:54:45Z
     creationTimestamp: null
     labels:
       app: postfix
@@ -40,8 +36,6 @@ objects:
   kind: ImageStream
   metadata:
     annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-      openshift.io/image.dockerRepositoryCheck: 2016-03-04T15:40:41Z
     creationTimestamp: null
     labels:
       app: redis
@@ -156,8 +150,8 @@ objects:
         containerNames:
         - gitlab
         from:
-          kind: ImageStreamTag
-          name: gitlab:latest
+          kind: ImageStream
+          name: gitlab
       type: ImageChange
   status: {}
 - apiVersion: v1
@@ -277,7 +271,7 @@ objects:
         containerNames:
         - postgresql
         from:
-          kind: ImageStreamTag
+          kind: ImageStream
           name: postgresql:latest
           namespace: openshift
       type: ImageChange
@@ -341,7 +335,7 @@ objects:
         containerNames:
         - redis
         from:
-          kind: ImageStreamTag
+          kind: ImageStream
           name: redis:latest
       type: ImageChange
   status: {}
