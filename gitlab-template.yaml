@@ -151,7 +151,7 @@ objects:
         - gitlab
         from:
           kind: ImageStream
-          name: gitlab
+          name: gitlab:latest
       type: ImageChange
   status: {}
 - apiVersion: v1
@@ -211,7 +211,7 @@ objects:
         containerNames:
         - postfix
         from:
-          kind: ImageStreamTag
+          kind: ImageStream
           name: postfix:latest
       type: ImageChange
   status: {}
@@ -506,11 +506,11 @@ parameters:
   - description: "Gitlab Email"
     name: "GITLAB_EMAIL"
     from: "no-reply@gitlab.example.com"
-    required: true
+    required: false
   - description: "Gitlab Email Domain"
     name: "GITLAB_EMAIL_DOMAIN"
     from: "example.com"
-    required: true
+    required: false
   - description: "Gitlab log volume capacity"
     name: "LOG_VOLUME_CAPACITY"
     from: "1 Gi"
