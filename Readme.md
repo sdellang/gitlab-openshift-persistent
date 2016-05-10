@@ -46,7 +46,7 @@ The env vars are a subset of the possible vars of sameersbn/gitlab.
 
 ## Persistent Volumes
 
-You must have all the persistent volumes or have a storage plugin configured. For the persistence storage configuration in Openshift please refer to the documentation. https://docs.openshift.com/enterprise/3.1/install_config/persistent_storage/index.html
+You must have all the persistent volumes or a storage plugin configured. For the persistence storage configuration in Openshift please refer to the documentation. https://docs.openshift.com/enterprise/3.1/install_config/persistent_storage/index.html
 
 ## Installation
 
